@@ -1,12 +1,19 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package ros2_controllers_test_nodes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package steering_controllers_library
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 2.23.0 (2023-06-23)
 -------------------
 
 2.22.0 (2023-06-14)
 -------------------
+* Bump versions for release
+* Let sphinx add parameter description to documentation (backport `#651 <https://github.com/ros-controls/ros2_controllers/issues/651>`_) (`#663 <https://github.com/ros-controls/ros2_controllers/issues/663>`_)
+* Second round of dependencies fix (`#655 <https://github.com/ros-controls/ros2_controllers/issues/655>`_) (`#656 <https://github.com/ros-controls/ros2_controllers/issues/656>`_)
+* Fix sphinx for steering odometry library/controllers (`#626 <https://github.com/ros-controls/ros2_controllers/issues/626>`_) (`#661 <https://github.com/ros-controls/ros2_controllers/issues/661>`_)
+* Remove unnecessary include (backport `#645 <https://github.com/ros-controls/ros2_controllers/issues/645>`_) (`#646 <https://github.com/ros-controls/ros2_controllers/issues/646>`_)
+* Steering odometry library and controllers (backport `#484 <https://github.com/ros-controls/ros2_controllers/issues/484>`_) (`#624 <https://github.com/ros-controls/ros2_controllers/issues/624>`_)
+* Contributors: Bence Magyar, Christoph Fröhlich, Tomislav Petković, Reza Kermani, Denis Štogl
 
 2.21.0 (2023-05-28)
 -------------------
@@ -43,13 +50,9 @@ Changelog for package ros2_controllers_test_nodes
 
 2.14.0 (2022-11-18)
 -------------------
-* Remove deprecation warning when parameter without value is set. (`#445 <https://github.com/ros-controls/ros2_controllers/issues/445>`_)
-* Contributors: Denis Štogl
 
 2.13.0 (2022-10-05)
 -------------------
-* Enable definition of all fields in JointTrajectory message when using test node. (`#389 <https://github.com/ros-controls/ros2_controllers/issues/389>`_)
-* Contributors: Denis Štogl
 
 2.12.0 (2022-09-01)
 -------------------
@@ -65,8 +68,6 @@ Changelog for package ros2_controllers_test_nodes
 
 2.8.0 (2022-07-09)
 ------------------
-* Fix deprecation in setup.cfg on Jammy (Humble and Rolling). (`#375 <https://github.com/ros-controls/ros2_controllers/issues/375>`_)
-* Contributors: Denis Štogl
 
 2.7.0 (2022-07-03)
 ------------------
@@ -88,8 +89,6 @@ Changelog for package ros2_controllers_test_nodes
 
 2.1.0 (2022-02-23)
 ------------------
-* Move test nodes from the ros2_control_demos repository. (`#294 <https://github.com/ros-controls/ros2_controllers/issues/294>`_)
-* Contributors: Denis Štogl, Lovro Ivanov
 
 2.0.1 (2022-02-01)
 ------------------
