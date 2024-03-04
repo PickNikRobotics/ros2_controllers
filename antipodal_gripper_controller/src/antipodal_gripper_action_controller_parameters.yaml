@@ -43,11 +43,11 @@ antipodal_gripper_action_controller:
   }
   use_effort_interface: {
     type: bool,
-    description: "Controller will claim the {joint}/gripper_effort interface if true.",
+    description: "Controller will claim the {joint}/set_gripper_max_velocity interface if true.",
     default_value: false,
   }
   use_velocity_interface: {
     type: bool,
-    description: "Controller will claim the {joint}/gripper_speed interface if true.",
+    description: "Controller will claim the {joint}/set_gripper_max_effort interface if true.",
     default_value: false,
   }
