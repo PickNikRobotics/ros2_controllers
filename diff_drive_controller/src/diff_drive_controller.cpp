@@ -122,18 +122,30 @@ InterfaceConfiguration DiffDriveController::state_interface_configuration() cons
 std::vector<hardware_interface::CommandInterface>
 DiffDriveController::on_export_reference_interfaces()
 {
-  const int nr_ref_itfs = 2;
-  reference_interfaces_.resize(nr_ref_itfs, std::numeric_limits<double>::quiet_NaN());
+  // Contrary to the original design of the chainable DiffDriveController, we are not depending on
+  // two interfaces for "linear" and "rotational" velocities, but instead we take global x/y/theta
+  // velocities into account. The reason is that we want to support a position tracking approach
+  // using JTC in combination with MoveIt's 3DOF planar joint. In the future, we might consider
+  // using an intermediary controller that fuses the x/y components into a single linear velocity.
+  const int nr_ref_itfs = 3;
+  reference_interfaces_.resize(nr_ref_itfs, 0.0);
   std::vector<hardware_interface::CommandInterface> reference_interfaces;
   reference_interfaces.reserve(nr_ref_itfs);
 
-  reference_interfaces.push_back(hardware_interface::CommandInterface(
-    get_node()->get_name(), std::string("linear/") + hardware_interface::HW_IF_VELOCITY,
-    &reference_interfaces_[0]));
+  reference_interfaces.push_back(
+    hardware_interface::CommandInterface(
+      get_node()->get_name(), std::string("x/") + hardware_interface::HW_IF_VELOCITY,
+      &reference_interfaces_[0]));
 
-  reference_interfaces.push_back(hardware_interface::CommandInterface(
-    get_node()->get_name(), std::string("angular/") + hardware_interface::HW_IF_VELOCITY,
-    &reference_interfaces_[1]));
+  reference_interfaces.push_back(
+    hardware_interface::CommandInterface(
+      get_node()->get_name(), std::string("y/") + hardware_interface::HW_IF_VELOCITY,
+      &reference_interfaces_[1]));
+
+  reference_interfaces.push_back(
+    hardware_interface::CommandInterface(
+      get_node()->get_name(), std::string("theta/") + hardware_interface::HW_IF_VELOCITY,
+      &reference_interfaces_[2]));
 
   return reference_interfaces;
 }
@@ -165,30 +177,17 @@ void DiffDriveController::reference_callback(const std::shared_ptr<ControllerTwi
   }
 }
 
-controller_interface::return_type DiffDriveController::update_reference_from_subscribers(
-  const rclcpp::Time & time, const rclcpp::Duration & /*period*/)
+controller_interface::return_type DiffDriveController::update_reference_from_subscribers()
 {
   auto current_ref = *(received_velocity_msg_ptr_.readFromRT());
-  const auto age_of_last_command = time - (current_ref)->header.stamp;
 
-  // send message only if there is no timeout
-  if (age_of_last_command <= ref_timeout_ || ref_timeout_ == rclcpp::Duration::from_seconds(0))
+  if (!std::isnan(current_ref->twist.linear.x) && !std::isnan(current_ref->twist.angular.z))
   {
-    if (!std::isnan(current_ref->twist.linear.x) && !std::isnan(current_ref->twist.angular.z))
-    {
-      reference_interfaces_[0] = current_ref->twist.linear.x;
-      reference_interfaces_[1] = current_ref->twist.angular.z;
-    }
-  }
-  else
-  {
-    if (!std::isnan(current_ref->twist.linear.x) && !std::isnan(current_ref->twist.angular.z))
-    {
-      reference_interfaces_[0] = 0.0;
-      reference_interfaces_[1] = 0.0;
-      current_ref->twist.linear.x = std::numeric_limits<double>::quiet_NaN();
-      current_ref->twist.angular.z = std::numeric_limits<double>::quiet_NaN();
-    }
+    // The linear velocity is decomposed into x/y components since we depend on that in the control
+    // loop
+    reference_interfaces_[0] = std::cos(odometry_.getHeading()) * current_ref->twist.linear.x;
+    reference_interfaces_[1] = std::sin(odometry_.getHeading()) * current_ref->twist.linear.x;
+    reference_interfaces_[2] = current_ref->twist.angular.z;
   }
 
   return controller_interface::return_type::OK;
@@ -197,10 +196,14 @@ controller_interface::return_type DiffDriveController::update_reference_from_sub
 controller_interface::return_type DiffDriveController::update_and_write_commands(
   const rclcpp::Time & time, const rclcpp::Duration & period)
 {
-  // command may be limited further by SpeedLimit,
-  // without affecting the stored twist command
-  const double linear_command = reference_interfaces_[0];
-  const double angular_command = reference_interfaces_[1];
+  // Compute and set the linear velocity and direction, copy the angular velocity command.
+  // The velocity angle can converge significantly from the current direction if theta is non-zero.
+  // The backward flag allows for M_PI_2 tolerance between these angles.
+  const double vel_angle = std::atan2(reference_interfaces_[1], reference_interfaces_[0]);
+  const bool backward = std::abs(std::abs(odometry_.getHeading() - vel_angle) - M_PI) < M_PI_2;
+  const double linear_command =
+    std::hypot(reference_interfaces_[0], reference_interfaces_[1]) * (backward ? -1 : 1);
+  const double angular_command = reference_interfaces_[2];
 
   previous_update_timestamp_ = time;
 
