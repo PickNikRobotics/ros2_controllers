@@ -402,8 +402,6 @@ controller_interface::CallbackReturn DiffDriveController::on_configure(
         limited_velocity_publisher_);
   }
 
-  received_velocity_msg_ptr_.reset();
-
   // Fill last two commands with default constructed commands
   previous_commands_.emplace(ControllerTwistReferenceMsg());
   previous_commands_.emplace(ControllerTwistReferenceMsg());
@@ -571,7 +569,11 @@ bool DiffDriveController::reset()
   subscriber_is_active_ = false;
   velocity_command_subscriber_.reset();
 
-  received_velocity_msg_ptr_.reset();
+  std::shared_ptr<ControllerTwistReferenceMsg> msg =
+    std::make_shared<ControllerTwistReferenceMsg>();
+  reset_controller_reference_msg(msg, get_node());
+  received_velocity_msg_ptr_.writeFromNonRT(msg);
+
   is_halted = false;
   return true;
 }
